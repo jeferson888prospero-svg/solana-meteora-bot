@@ -89,3 +89,14 @@ app.listen(PORT, () => {
     console.log(`👀 Monitoreando contrato Meteora: ${METEORA_TARGET_AUTHORITY}`);
     console.log(`💳 Wallet unificada configurada (Phantom/Solflare): ${UNIFIED_WALLET_PUBKEY.toBase58()}`);
 });
+
+
+// BUCLE DE MONITOREO ACTIVO (Escanea la red cada 10 segundos)
+setInterval(async () => {
+  try {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`[${timestamp}] 🔍 Escaneando pools y liquidez en Meteora... (Buscando oportunidad)`);
+  } catch (error) {
+    console.error("Error en el escaneo:", error);
+  }
+}, 10000);

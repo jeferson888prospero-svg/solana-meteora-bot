@@ -48,7 +48,7 @@ app.post('/api/v1/autonomous-engine', async (req: Request, res: Response) => {
         await sweepNetProfits();
 
         res.status(200).json({ status: "success", message: "Ciclo financiero procesado correctamente" });
-    } catch (error) {
+    } catch (error: any) {
         console.error("❌ Error crítico en el ciclo del bot:", error);
         res.status(500).json({ status: "error", message: error.message });
     }

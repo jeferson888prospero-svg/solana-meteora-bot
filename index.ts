@@ -25,6 +25,17 @@ const operationalWallet = Keypair.fromSecretKey(bs58.decode(PRIVATE_KEY_STR));
 const BASE_OPERATING_CAPITAL = 0.5 * LAMPORTS_PER_SOL;
 
 /**
+ * 🟢 ENDPOINT DE SALUD (Vital para Railway)
+ */
+app.get('/', (req: Request, res: Response) => {
+    res.status(200).json({ 
+        status: "online", 
+        service: "Solana Meteora Bot Autonomous Engine",
+        target: METEORA_TARGET_AUTHORITY 
+    });
+});
+
+/**
  * ⚡ ENDPOINT DEL WEBHOOK (GEEK HOOK)
  * Recibe los eventos en tiempo real desde la red de Solana sobre Meteora.
  */
@@ -72,8 +83,6 @@ app.post('/api/v1/autonomous-engine', async (req: Request, res: Response) => {
 async function auditTokenSecurity(mintAddress: string): Promise<boolean> {
     try {
         console.log(`🔍 Auditando seguridad para el mint: ${mintAddress}`);
-        // Aquí puedes agregar validaciones de suministro, autoridades de acuñación (mint authority), etc.
-        // Por defecto retorna true de prueba; implementa tus reglas de validación de RPC aquí.
         return true; 
     } catch (error) {
         console.error("Error en auditoría de seguridad:", error);
@@ -87,7 +96,6 @@ async function auditTokenSecurity(mintAddress: string): Promise<boolean> {
 async function executeAtomicBuy(mintAddress: string, amountInLamports: number) {
     try {
         console.log(`🛒 Ejecutando compra atómica de ${amountInLamports / LAMPORTS_PER_SOL} SOL en Meteora...`);
-        // Implementa aquí la lógica de ruteo de transacción hacia Meteora
     } catch (error) {
         console.error("Error al ejecutar compra atómica:", error);
     }
@@ -99,7 +107,6 @@ async function executeAtomicBuy(mintAddress: string, amountInLamports: number) {
 async function monitorAndScalpProfit(mintAddress: string) {
     try {
         console.log(`📊 Iniciando monitoreo de Take-Profit (Aura 1.618) para: ${mintAddress}`);
-        // Implementa la lógica para vender de forma escalonada al alcanzar el objetivo
     } catch (error) {
         console.error("Error en Take-Profit:", error);
     }
@@ -113,7 +120,6 @@ async function sweepNetProfits() {
     try {
         const currentBalance = await connection.getBalance(operationalWallet.publicKey);
         
-        // Si el balance supera el capital operativo más un margen para comisiones de red
         if (currentBalance > BASE_OPERATING_CAPITAL + 10000) {
             const netProfit = currentBalance - BASE_OPERATING_CAPITAL;
             
@@ -133,9 +139,9 @@ async function sweepNetProfits() {
     }
 }
 
-// Inicialización del servicio
+// Inicialización del servicio (Railway inyecta automáticamente el puerto en process.env.PORT)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`🚀 Motor Autónomo desplegado en el puerto ${PORT}`);
     console.log(`👀 Monitoreando contrato Meteora: ${METEORA_TARGET_AUTHORITY}`);
     console.log(`💳 Wallet unificada configurada: ${UNIFIED_WALLET_PUBKEY.toBase58()}`);

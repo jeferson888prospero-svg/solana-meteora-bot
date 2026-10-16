@@ -2,15 +2,18 @@
   "name": "solana-meteora-bot",
   "version": "1.0.0",
   "description": "Autonomous trading bot and profit sweeper on Solana",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node index.ts"
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@solana/web3.js": "^1.95.0",
     "@types/express": "^4.17.21",
     "bs58": "^5.0.0",
-    "express": "^4.19.2",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }

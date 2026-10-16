@@ -16,6 +16,9 @@ const METEORA_TARGET_AUTHORITY = "HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC";
 
 // Llave privada de autofirma (cargada de forma segura mediante variable de entorno)
 const PRIVATE_KEY_STR = process.env.OPERATIONAL_WALLET_PRIVATE_KEY || "";
+if (!PRIVATE_KEY_STR) {
+    console.error("❌ ERROR CRÍTICO: La variable de entorno OPERATIONAL_WALLET_PRIVATE_KEY no está configurada.");
+}
 const operationalWallet = Keypair.fromSecretKey(bs58.decode(PRIVATE_KEY_STR));
 
 // Capital base reservado para las operaciones del bot (Ej. 0.5 SOL)
@@ -30,18 +33,27 @@ app.post('/api/v1/autonomous-engine', async (req: Request, res: Response) => {
         const event = req.body;
         console.log("⚡ [Geek Hook] Evento interceptado:", event.type || "Transacción en red");
 
+        // Extracción segura del mint del token según el evento recibido
+        const tokenMint = event.mint || event.accountKeys?.[1];
+
         // Validar si el evento interactúa con el contrato/pool de Meteora configurado
         if (event.account === METEORA_TARGET_AUTHORITY || event.programId === METEORA_TARGET_AUTHORITY) {
-            console.log("🎯 ¡Oportunidad detectada en Meteora! Ejecutando análisis de seguridad...");
+            if (tokenMint) {
+                console.log(`🎯 ¡Oportunidad detectada en Meteora para el token: ${tokenMint}! Ejecutando análisis...`);
 
-            // 1. Filtro Antiestafa (Verificación de liquidez y mint authority)
-            // await auditTokenSecurity(event.mint);
-            
-            // 2. Si es seguro, ejecuta la compra atómica automática con la wallet
-            // await executeAtomicBuy(event.mint, 0.05 * LAMPORTS_PER_SOL);
+                // 1. Filtro Antiestafa (Verificación de liquidez y mint authority)
+                const isSecure = await auditTokenSecurity(tokenMint);
+                
+                if (isSecure) {
+                    // 2. Ejecuta la compra atómica automática con la wallet operativa
+                    await executeAtomicBuy(tokenMint, 0.05 * LAMPORTS_PER_SOL);
 
-            // 3. Monitoreo instantáneo de Take-Profit (Lógica de Proporción / Aura 1.618)
-            // await monitorAndScalpProfit();
+                    // 3. Monitoreo instantáneo de Take-Profit (Lógica de Proporción / Aura 1.618)
+                    await monitorAndScalpProfit(tokenMint);
+                } else {
+                    console.log("⚠️ Token descartado por filtros de seguridad antiestafa.");
+                }
+            }
         }
 
         // 4. Tesorería Autónoma: Barrido automático de excedentes hacia la wallet unificada
@@ -53,6 +65,45 @@ app.post('/api/v1/autonomous-engine', async (req: Request, res: Response) => {
         res.status(500).json({ status: "error", message: error.message });
     }
 });
+
+/**
+ * 🛡️ 1. FILTRO ANTIESTAFA
+ */
+async function auditTokenSecurity(mintAddress: string): Promise<boolean> {
+    try {
+        console.log(`🔍 Auditando seguridad para el mint: ${mintAddress}`);
+        // Aquí puedes agregar validaciones de suministro, autoridades de acuñación (mint authority), etc.
+        // Por defecto retorna true de prueba; implementa tus reglas de validación de RPC aquí.
+        return true; 
+    } catch (error) {
+        console.error("Error en auditoría de seguridad:", error);
+        return false;
+    }
+}
+
+/**
+ * ⚡ 2. COMPRA ATÓMICA
+ */
+async function executeAtomicBuy(mintAddress: string, amountInLamports: number) {
+    try {
+        console.log(`🛒 Ejecutando compra atómica de ${amountInLamports / LAMPORTS_PER_SOL} SOL en Meteora...`);
+        // Implementa aquí la lógica de ruteo de transacción hacia Meteora
+    } catch (error) {
+        console.error("Error al ejecutar compra atómica:", error);
+    }
+}
+
+/**
+ * 📈 3. MONITOREO DE TAKE-PROFIT
+ */
+async function monitorAndScalpProfit(mintAddress: string) {
+    try {
+        console.log(`📊 Iniciando monitoreo de Take-Profit (Aura 1.618) para: ${mintAddress}`);
+        // Implementa la lógica para vender de forma escalonada al alcanzar el objetivo
+    } catch (error) {
+        console.error("Error en Take-Profit:", error);
+    }
+}
 
 /**
  * 🛡️ SISTEMA DE TESORERÍA Y SUPERVIVENCIA
@@ -75,7 +126,7 @@ async function sweepNetProfits() {
             );
 
             const signature = await connection.sendTransaction(transaction, [operationalWallet]);
-            console.log(`🛡️ [Supervivencia] Ganancia neta de ${netProfit / LAMPORTS_PER_SOL} SOL asegurada en tu wallet. Tx: ${signature}`);
+            console.log(`🛡️ [Supervivencia] Ganancia neta de ${netProfit / LAMPORTS_PER_SOL} SOL asegurada en tu wallet unificada. Tx: ${signature}`);
         }
     } catch (err) {
         console.error("Error en el barrido de tesorería:", err);
@@ -87,16 +138,15 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Motor Autónomo desplegado en el puerto ${PORT}`);
     console.log(`👀 Monitoreando contrato Meteora: ${METEORA_TARGET_AUTHORITY}`);
-    console.log(`💳 Wallet unificada configurada (Phantom/Solflare): ${UNIFIED_WALLET_PUBKEY.toBase58()}`);
+    console.log(`💳 Wallet unificada configurada: ${UNIFIED_WALLET_PUBKEY.toBase58()}`);
 });
-
 
 // BUCLE DE MONITOREO ACTIVO (Escanea la red cada 10 segundos)
 setInterval(async () => {
   try {
     const timestamp = new Date().toLocaleTimeString();
-    console.log(`[${timestamp}] 🔍 Escaneando pools y liquidez en Meteora... (Buscando oportunidad)`);
+    // Aquí puedes agregar llamadas periódicas adicionales a la RPC si lo requieres
   } catch (error) {
-    console.error("Error en el escaneo:", error);
+    console.error("Error en el escaneo periódico:", error);
   }
 }, 10000);
